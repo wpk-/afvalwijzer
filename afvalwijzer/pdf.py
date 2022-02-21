@@ -9,6 +9,31 @@ from afvalwijzer.models import AdresRegels, Adres, BuurtRegels, Regel
 from afvalwijzer.html import strip_tags
 from afvalwijzer.nummering import HuisnummerIndex
 
+FONT_FILE = 'C:/Windows/Fonts/corbel.ttf'
+FONT_FILE_BOLD = 'C:/Windows/Fonts/corbelb.ttf'
+PAGE_WIDTH = 210
+PAGE_MARGIN_LEFT = 31
+PAGE_MARGIN_RIGHT = 29
+PAGE_MARGIN_TOP = 10
+PAGE_MARGIN_BOTTOM = 27
+CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN_LEFT - PAGE_MARGIN_RIGHT
+FONT_SIZE_BASE = 10.5
+FONT_SIZE_HEADING = 21
+FONT_SIZE_FOOTER = 10.5
+FONT_SIZE_HEADER = 8.5
+LINE_HEIGHT = 0.45
+DEBUG_BOX = False
+
+
+def datum_vandaag() -> str:
+    maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli',
+               'augustus', 'september', 'oktober', 'november', 'december']
+    vandaag = date.today()
+    return f'{vandaag.day} {maanden[vandaag.month]} {vandaag.year}'
+
+
+DATUM = datum_vandaag()
+
 
 class AfvalwijzerPDF:
     """Verwerkt de AfvalwijzerCSV data tot een weergave in HTML.
@@ -119,32 +144,6 @@ class AfvalwijzerPDF:
         for buurt_regels in self.afvalwijzer.buurt_regels():
             self.print_buurt_regels(buurt_regels)
         self.pdf.output(filename)
-
-
-FONT_FILE = 'C:/Windows/Fonts/corbel.ttf'
-FONT_FILE_BOLD = 'C:/Windows/Fonts/corbelb.ttf'
-PAGE_WIDTH = 210
-PAGE_MARGIN_LEFT = 31
-PAGE_MARGIN_RIGHT = 29
-PAGE_MARGIN_TOP = 10
-PAGE_MARGIN_BOTTOM = 27
-CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN_LEFT - PAGE_MARGIN_RIGHT
-FONT_SIZE_BASE = 10.5
-FONT_SIZE_HEADING = 21
-FONT_SIZE_FOOTER = 10.5
-FONT_SIZE_HEADER = 8.5
-LINE_HEIGHT = 0.45
-DEBUG_BOX = False
-
-
-def datum_vandaag() -> str:
-    maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli',
-               'augustus', 'september', 'oktober', 'november', 'december']
-    vandaag = date.today()
-    return f'{vandaag.day} {maanden[vandaag.month]} {vandaag.year}'
-
-
-DATUM = datum_vandaag()
 
 
 class PDF(FPDF):
