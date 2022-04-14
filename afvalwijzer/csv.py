@@ -1,40 +1,51 @@
 import csv
+from collections import defaultdict
 
-import bleach as bleach
+from afvalwijzer.models import Adres, AfvalwijzerRegel, Regelset
+from afvalwijzer.nummering import Adresreeksen
 
-from afvalwijzer.models import AfvalwijzerRegel
 
-
-def laad_regels(filename: str, strip: bool = False) -> list[AfvalwijzerRegel]:
+def laad_regels(filename: str) -> tuple[dict[Regelset, list[Adres]],
+                                        Adresreeksen]:
     """Leest de Afvalwijzer data dump (csv).
 
     Elke tekstregel in het bestand beschrijft een geldende regel
     gekoppeld aan een adres. Verschillende tekstregels kunnen meerdere
     regels op hetzelfde adres beschrijven.
 
+    Deze functie leest de regels en sorteert en groepeert de data.
+
     :arg filename: Pad naar en naam van het CSV-bestand met afval regels.
-    :arg strip: Schoon de gegevens op door HTML-tags te verwijderen.
-    Default is False.
-    :return: Een lijst met afvalregels. Een regel geeft instructies voor
-    het aanbieden van afval van een afvalfractie op een adres.
+    :return: Twee objecten: 1) een dict van regelset -> lijst van alle
+    adressen waarvoor deze regelset geldt. 2) een Adresreeksen instantie
+    te gebruiken om reeksen adressen netjes te nummeren.
     """
+    adres_regels = defaultdict(set)
+
+    # 1. Lees alle regels en groepeer op adres.
     with open(filename, encoding='utf-8', newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=';', quotechar='"')
 
         if tuple(next(reader)) != AfvalwijzerRegel._fields:
             raise ValueError('De CSV file header wordt niet herkend.')
 
-        if not strip:
-            return [AfvalwijzerRegel(*line) for line in reader]
-        else:
-            strip_tags = bleach.Cleaner([], {}, strip=True).clean
-            regels = (AfvalwijzerRegel(*line) for line in reader)
-            return [
-                r._replace(
-                    afvalwijzer_afvalkalender_melding=strip_tags(
-                        r.afvalwijzer_afvalkalender_melding),
-                    afvalwijzer_afvalkalender_opmerking=strip_tags(
-                        r.afvalwijzer_afvalkalender_opmerking)
-                )
-                for r in regels
-            ]
+        for line in reader:
+            awr = AfvalwijzerRegel(*line)
+            adres_regels[awr.adres()].add(awr.regel())
+
+    # 2. Groepeer de adressen op regelset.
+    regelset_adressen = defaultdict(list)
+
+    for adres, regels in adres_regels.items():
+        regelset = tuple(sorted(regels))
+        regelset_adressen[regelset].append(adres)
+
+    # 3. Sorteer de adressen per regelset-groep.
+    for adressen in regelset_adressen.values():
+        adressen.sort()
+
+    # 4. Sorteer de groepen op adres (het eerste).
+    regelset_adressen = dict(sorted(regelset_adressen.items(),
+                                    key=lambda rs_aa: rs_aa[1][0]))
+
+    return regelset_adressen, Adresreeksen(adres_regels.keys())

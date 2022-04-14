@@ -4,7 +4,7 @@ from typing import Union
 
 from fpdf import FPDF
 
-from afvalwijzer.models import Adres, BuurtRegelset, Regel, Straat
+from afvalwijzer.models import Adres, Regel, Straat
 
 PAGE_WIDTH = 210
 MARGIN_LEFT = 31
@@ -107,7 +107,7 @@ class Printer(FPDF):
 
         self.y += line_height // 2
 
-    def print_buurt(self, buurt: Union[Adres, Straat, BuurtRegelset]) -> None:
+    def print_buurt(self, buurt: Union[Adres, Regel, Straat]) -> None:
         font_size = FONT_SIZE_TITLE
         line_height = LINE_HEIGHT * font_size
         cw = CONTENT_WIDTH

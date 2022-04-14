@@ -34,66 +34,15 @@ Daardoor zijn een aantal velden niet nodig:
 
 """
 import os.path
-from collections import defaultdict
-from collections.abc import Iterable
 
 from afvalwijzer.csv import laad_regels
-from afvalwijzer.models import Adres, AfvalwijzerRegel, BuurtRegelset
-from afvalwijzer.nummering import Adresreeksen
 from afvalwijzer.pdf import Printer
-
-
-def groepeer(regels: Iterable[AfvalwijzerRegel]
-             ) -> dict[BuurtRegelset, list[Adres]]:
-    """Groepeert alle adressen op buurt + regelset.
-
-    :arg regels: Iterable van afvalwijzer regels. Een enkele afvalwijzer
-    regel geeft informatie over de inzameling van een enkele afvalstroom
-    op een enkel adres.
-    :return: Alle adressen gegroepeerd per buurt + regelset. De regelset
-    is de uitputtende set regels die gelden op een adres. Adressen met
-    precies dezelfde regelset (en in dezelfde buurt) worden gegroepeerd.
-    De return waarde is een dict van BuurtRegelset naar lijst van
-    adressen.
-    """
-    # 1. Sorteer en groepeer alle regels op adres.
-    adres_regelset = defaultdict(list)
-
-    for regel in sorted(regels, key=lambda r: r.adres()):
-        adres_regelset[regel.adres()].append(regel.regel())
-
-    # 2. Zet de groepen om naar Regelset. Deze zijn hashable.
-    # 3. Groepeer per buurt de adressen op regelset.
-    buurt_regelset_adressen = defaultdict(list)
-
-    for adres, regels in adres_regelset.items():
-        regelset = tuple(sorted(regels))
-        key = BuurtRegelset(adres.woonplaats, adres.buurt, regelset)
-        buurt_regelset_adressen[key].append(adres)
-
-    # # 4. Sorteer de regelset-groepen op buurt + eerste adres.
-    # bra_items = sorted(buurt_regelset_adressen.items(),
-    #                    key=lambda bra: (bra[0][:2], bra[1][0]))
-    return dict(buurt_regelset_adressen)
 
 
 def main(csv_file: str, pdf_file: str) -> None:
     """Leest de afvalwijzer CSV-export en zet dit om naar PDF.
 
-    Voert de volgende stappen uit op de een lijst `AfvalwijzerRegel`s:
-
-    1. Sorteer en groepeer alle regels op adres.
-    2. Zet de groepen om naar Regelset. Deze zijn hashable.
-    3. Groepeer per buurt de adressen op regelset.
-    4. Sorteer de regelset-groepen op buurt + eerste adres.
-    5. Vat adressen in reeksen.
-
-    Houd er rekening mee dat een tussenliggend huisnummer in een andere buurt
-    kan liggen.
-
-    :arg csv_file: Het CSV-bestand met alle afvalwijzer regels
-    (instructies). Elke regel (tekst) in het bestand beschrijft voor 1
-    adres voor 1 afvalfractie hoe en wanneer dat aangeboden moet worden.
+    :arg csv_file: Het CSV-bestand met alle afvalwijzer regels.
     :arg pdf_file: Het PDF-bestand om naartoe te schrijven.
     """
     pdf = Printer(font_cache_dir=os.path.split(pdf_file)[0])
@@ -101,26 +50,17 @@ def main(csv_file: str, pdf_file: str) -> None:
     pdf.print_voorblad()
     pdf.add_page()
 
-    regels = laad_regels(csv_file, strip=True)
-    adres_reeks = Adresreeksen(r.adres() for r in regels)
+    regels, adres_reeksen = laad_regels(csv_file)
 
-    # 1. Sorteer en groepeer alle regels op adres.
-    # 2. Zet de groepen om naar Regelset. Deze zijn hashable.
-    # 3. Groepeer per buurt de adressen op regelset.
-    # 4. Sorteer de regelset-groepen op buurt + eerste adres.
-    buurt_regelset_adressen = groepeer(regels)
+    laatste_buurt = (None, None)
+    for regelset, adressen in regels.items():
+        if regelset[0][:2] != laatste_buurt:
+            pdf.print_buurt(regelset[0])
+            laatste_buurt = regelset[0][:2]
 
-    # 5. Vat adressen in reeksen.
-    laatste_buurt = BuurtRegelset(None, None, None)
-    for buurt_regelset, adressen in buurt_regelset_adressen.items():
-        if not (buurt_regelset.woonplaats == laatste_buurt.woonplaats and
-                buurt_regelset.buurt == laatste_buurt.buurt):
-            pdf.print_buurt(buurt_regelset)
-            laatste_buurt = buurt_regelset
-
-        adressen = adres_reeks(sorted(adressen))
+        adressen = adres_reeksen(adressen)
         pdf.print_adressen(adressen)
-        pdf.print_regelset(buurt_regelset.regelset)
+        pdf.print_regelset(regelset)
 
     pdf.output(pdf_file)
 
@@ -128,7 +68,12 @@ def main(csv_file: str, pdf_file: str) -> None:
 if __name__ == '__main__':
     from config import afvalwijzer_csv_1k, afvalwijzer_csv_file
 
-    afvalwijzer_csv = afvalwijzer_csv_1k        # For testing.
-    # afvalwijzer_csv = afvalwijzer_csv_file      # For real.
+    from time import time
+    t0 = time()
+
+    afvalwijzer_csv = afvalwijzer_csv_1k        # Test
+    # afvalwijzer_csv = afvalwijzer_csv_file      # Live
 
     main(afvalwijzer_csv, 'output/afvalwijzer.pdf')
+
+    print(f'Klaar in {time()-t0:.2f} sec.')

@@ -1,5 +1,10 @@
 from typing import NamedTuple
 
+import bleach
+
+# Nodig om melding en opmerking op te schonen in `Regel.labels()`.
+strip_tags = bleach.Cleaner([], {}, strip=True).clean
+
 
 class AfvalwijzerRegel(NamedTuple):
     """Instructies voor een afvalfractie op een adres.
@@ -63,8 +68,14 @@ class AfvalwijzerRegel(NamedTuple):
         return Adres(woonplaats, buurt, straatnaam, huisnummer, toevoeging)
 
     def regel(self) -> 'Regel':
-        """Mapping naar regel."""
+        """Mapping naar regel.
+
+        Een regel heeft ook een woonplaats en buurt omdat in de PDF
+        regels per buurt gepresenteerd worden.
+        """
         return Regel(
+            self.woonplaatsnaam,
+            self.gbd_buurt_code,
             self.afvalwijzer_fractie_naam,
             self.afvalwijzer_afvalkalender_melding,
             self.afvalwijzer_afvalkalender_van,
@@ -116,6 +127,8 @@ class Regel(NamedTuple):
     Bijvoorbeeld, hoe biedt ik mijn papier afval aan? Op welke dagen
     wordt dat ingezameld?
     """
+    woonplaats: str
+    buurt: str
     fractie: str
     melding: str        # = Let op
     melding_van: str    # = Let op
@@ -138,7 +151,7 @@ class Regel(NamedTuple):
             if self.melding_van:
                 arr.append(('Let op:', f'Van {datum(self.melding_van)}'
                                        f' tot {datum(self.melding_tot)}'))
-                arr.append(('', self.melding))
+                arr.append(('', strip_tags(self.melding)))
             else:
                 arr.append(('Let op:', self.melding))
         if self.instructie:
@@ -151,18 +164,9 @@ class Regel(NamedTuple):
         if self.waar:
             arr.append(('Waar:', self.waar))
         if self.opmerking:
-            arr.append(('Opmerking:', self.opmerking))
+            arr.append(('Opmerking:', strip_tags(self.opmerking)))
 
         return arr
 
 
-class BuurtRegelset(NamedTuple):
-    """Binnen de buurt zijn adressen waar specifiek deze regels gelden.
-
-    Dit wordt gebruikt als key om adressen binnen de buurt te groeperen
-    waarvoor dezelfde regels gelden. We kunnen vervolgens de adressen
-    groepsgewijs presenteren.
-    """
-    woonplaats: str
-    buurt: str
-    regelset: tuple[Regel, ...]
+Regelset = tuple[Regel, ...]
