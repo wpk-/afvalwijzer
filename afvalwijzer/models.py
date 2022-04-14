@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Tuple
+from typing import NamedTuple
 
 
 class AfvalwijzerRegel(NamedTuple):
@@ -65,8 +65,6 @@ class AfvalwijzerRegel(NamedTuple):
     def regel(self) -> 'Regel':
         """Mapping naar regel."""
         return Regel(
-            self.woonplaatsnaam,
-            self.gbd_buurt_code,
             self.afvalwijzer_fractie_naam,
             self.afvalwijzer_afvalkalender_melding,
             self.afvalwijzer_afvalkalender_van,
@@ -81,10 +79,9 @@ class AfvalwijzerRegel(NamedTuple):
 
 
 class Adres(NamedTuple):
-    """
-    Amsterdam
-    A00c
-    Nieuwmarkt 4A-3
+    """Een adres opgebouwd in volgorde van specificiteit, incl. buurt.
+
+    Bijvoorbeeld "Amsterdam, A00c, Nieuwmarkt 4A-3"
     """
     woonplaats: str
     buurt: str
@@ -93,25 +90,32 @@ class Adres(NamedTuple):
     toevoeging: str
 
 
-class Regel(NamedTuple):
-    """
-    Een regel geldt voor een bepaalde afvalfractie (bijv. restafval). We
-    voegen ook woonplaats en buurt toe om adressen met dezelfde regels,
-    maar in verschillende buurten, uit elkaar te kunnen trekken. Voor het
-    sorteren is ook van belang dat woonplaats, buurt en fractie---in die
-    volgorde---de eerste velden zijn.
+class Huisnummer(NamedTuple):
+    """Een volledig huisnummer, inclusief huisnummertoevoeging.
 
-    Restafval
-    Let op:         van 31-8-2021 tot 31-8-2022
-                    Breng uw kerstboom naar het inzamelpunt in uw buurt.
-    Hoe:            In de container voor restafval
-    Ophaaldag:      maandag, dinsdag, ..., 1e dinsdag van de maand.
-    Buiten zetten:  Woensdag vanaf 21.00 tot Donderdag 07.00
-    Waar:           Kaart met containers in de buurt
-    Opmerking:      In Nieuw-West moet u uw tuinafval apart aanmelden.
+    Deze representatie wordt gebruikt om adresreeksen te maken. Binnen
+    een straat worden dan opeenvolgende huisnummers samengevoegd. Op het
+    laatste huisnummer wordt de toevoeging dan vervangen door een
+    aanduiding voor de reeks, zoals "A--468L".
+    """
+    huisnummer: int
+    toevoeging: str
+
+
+class Straat(NamedTuple):
+    """De aanduiding van een adres tot op straatniveau zonder huisnummer.
     """
     woonplaats: str
     buurt: str
+    straatnaam: str
+
+
+class Regel(NamedTuple):
+    """De geldende regel voor het aanbieden van afval van een fractie.
+
+    Bijvoorbeeld, hoe biedt ik mijn papier afval aan? Op welke dagen
+    wordt dat ingezameld?
+    """
     fractie: str
     melding: str        # = Let op
     melding_van: str    # = Let op
@@ -123,16 +127,42 @@ class Regel(NamedTuple):
     waar: str           # = Waar
     opmerking: str      # = Opmerking
 
+    def labels(self) -> list[tuple[str, str]]:
+        def datum(s: str) -> str:
+            """Haalt de datum uit de UTC-string."""
+            return f'{s[8:10]}-{s[5:7]}-{s[0:4]}'
 
-class AdresRegels(NamedTuple):
-    """Koppelt een verzameling adressen aan een verzameling regels.
-    Deze exacte combinatie van regels geldt precies op al deze adressen.
+        arr = []
+
+        if self.melding:
+            if self.melding_van:
+                arr.append(('Let op:', f'Van {datum(self.melding_van)}'
+                                       f' tot {datum(self.melding_tot)}'))
+                arr.append(('', self.melding))
+            else:
+                arr.append(('Let op:', self.melding))
+        if self.instructie:
+            arr.append(('Hoe:', self.instructie))
+        if self.ophaaldagen:
+            arr.append(('Ophaaldag:', self.ophaaldagen +
+                        (f', {self.frequentie}' if self.frequentie else '')))
+        if self.buitenzetten:
+            arr.append(('Buiten zetten:', self.buitenzetten))
+        if self.waar:
+            arr.append(('Waar:', self.waar))
+        if self.opmerking:
+            arr.append(('Opmerking:', self.opmerking))
+
+        return arr
+
+
+class BuurtRegelset(NamedTuple):
+    """Binnen de buurt zijn adressen waar specifiek deze regels gelden.
+
+    Dit wordt gebruikt als key om adressen binnen de buurt te groeperen
+    waarvoor dezelfde regels gelden. We kunnen vervolgens de adressen
+    groepsgewijs presenteren.
     """
-    adressen: List[Adres]
-    regels: Tuple[Regel, ...]
-
-
-class BuurtRegels(NamedTuple):
-    """Groepeert AdresRegels per buurt."""
-    buurt: Tuple[str, str]
-    regels: List[AdresRegels]
+    woonplaats: str
+    buurt: str
+    regelset: tuple[Regel, ...]

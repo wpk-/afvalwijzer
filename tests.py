@@ -3,8 +3,8 @@ Een verzameling functies die inzicht geven in de waardes in het 1GB data
 bestand.
 """
 import csv
+from collections.abc import Callable, Iterable, Sequence
 from operator import itemgetter
-from typing import Iterable, Sequence, Callable
 
 from afvalwijzer.models import AfvalwijzerRegel
 

@@ -20,9 +20,9 @@ in de samenhang van waardes in het databestad. Zie de verscheidene `test_info_`
 functies. Ze zijn redelijk goed gedocumenteerd.
 
 Gebruik uiteindelijk `main.py` om werkelijk het ruwe databestand om te zetten
-naar een overzichtelijk `.html` en `.pdf` bestand. Deze staat ingesteld om te
-werken met het 10k bestand. Pas onderin de commentaren aan om het uit te voeren
-op het volledige databestand.
+naar een overzichtelijk `.pdf` bestand. Deze staat ingesteld om te werken met
+het 10k bestand. Pas onderin de commentaren aan om het uit te voeren op het
+volledige databestand.
 
 ## Licentie
 
