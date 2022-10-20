@@ -33,47 +33,32 @@ Daardoor zijn een aantal velden niet nodig:
 - afvalwijzer_buitenzetten_vanaf_tot (is identiek aan afvalwijzer_buitenzetten)
 
 """
-import os.path
+import logging
+from pathlib import Path
 
-from afvalwijzer.csv import laad_regels
-from afvalwijzer.pdf import Printer
+from afvalwijzer import maak_pdf
 
-
-def main(csv_file: str, pdf_file: str) -> None:
-    """Leest de afvalwijzer CSV-export en zet dit om naar PDF.
-
-    :arg csv_file: Het CSV-bestand met alle afvalwijzer regels.
-    :arg pdf_file: Het PDF-bestand om naartoe te schrijven.
-    """
-    pdf = Printer(font_cache_dir=os.path.split(pdf_file)[0])
-    pdf.add_page()
-    pdf.print_voorblad()
-    pdf.add_page()
-
-    regels, adres_reeksen = laad_regels(csv_file)
-
-    laatste_buurt = (None, None)
-    for regelset, adressen in regels.items():
-        if regelset[0][:2] != laatste_buurt:
-            pdf.print_buurt(regelset[0])
-            laatste_buurt = regelset[0][:2]
-
-        adressen = adres_reeksen(adressen)
-        pdf.print_adressen(adressen)
-        pdf.print_regelset(regelset)
-
-    pdf.output(pdf_file)
+logging.basicConfig(level=logging.INFO)
 
 
 if __name__ == '__main__':
-    from config import afvalwijzer_csv_1k, afvalwijzer_csv_file
-
+    import argparse
     from time import time
+
+    parser = argparse.ArgumentParser(
+        description='Maak een schone afvalwijzer pdf.')
+
+    parser.add_argument('csv_file', metavar='IN',
+                        help='CSV-bestand met alle regels van de afvalwijzer.')
+    parser.add_argument('pdf_file', metavar='OUT', nargs='?',
+                        help='PDF-bestand om naartoe te schrijven.')
+
+    args = parser.parse_args()
+
+    csv_file = Path(args.csv_file)
+    pdf_file = Path(args.pdf_file or f'output/{csv_file.stem}.pdf')
+
     t0 = time()
 
-    afvalwijzer_csv = afvalwijzer_csv_1k        # Test
-    # afvalwijzer_csv = afvalwijzer_csv_file      # Live
-
-    main(afvalwijzer_csv, 'output/afvalwijzer.pdf')
-
+    maak_pdf(csv_file, pdf_file)
     print(f'Klaar in {time()-t0:.2f} sec.')

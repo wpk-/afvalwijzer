@@ -1,12 +1,16 @@
 import csv
+import logging
 from collections import defaultdict
+from pathlib import Path
 
 from afvalwijzer.models import Adres, AfvalwijzerRegel, Regelset
 from afvalwijzer.nummering import Adresreeksen
 
+logger = logging.getLogger(__name__)
 
-def laad_regels(filename: str) -> tuple[dict[Regelset, list[Adres]],
-                                        Adresreeksen]:
+
+def laad_regels(filename: Path) -> tuple[dict[Regelset, list[Adres]],
+                                         Adresreeksen]:
     """Leest de Afvalwijzer data dump (csv).
 
     Elke tekstregel in het bestand beschrijft een geldende regel
@@ -24,13 +28,21 @@ def laad_regels(filename: str) -> tuple[dict[Regelset, list[Adres]],
 
     # 1. Lees alle regels en groepeer op adres.
     with open(filename, encoding='utf-8', newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
 
-        if tuple(next(reader)) != AfvalwijzerRegel._fields:
+        header = tuple(next(reader))
+
+        if header != AfvalwijzerRegel._fields:
+            logger.warning(header)
+            logger.warning(AfvalwijzerRegel._fields)
             raise ValueError('De CSV file header wordt niet herkend.')
 
         for line in reader:
-            awr = AfvalwijzerRegel(*line)
+            try:
+                awr = AfvalwijzerRegel(*line)
+            except TypeError as err:
+                logger.warning(line)
+                raise err
             adres_regels[awr.adres()].add(awr.regel())
 
     # 2. Groepeer de adressen op regelset.

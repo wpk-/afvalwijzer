@@ -17,54 +17,53 @@ class AfvalwijzerRegel(NamedTuple):
         adres() - geeft het adres,
         regel() - geeft de regel die geldt voor het aanbieden van afval.
     """
-    bag_nummeraanduiding_id: str
-    afvalwijzer_id: str
-    naam_openbareruimte: str
-    huisnummer: str
-    huisletter: str
-    huisnummertoevoeging: str
-    postcode: str
-    woonplaatsnaam: str
-    status_adres: str
-    afvalwijzer_gebruiksdoel_woonfunctie: str
-    afvalwijzer_instructie: str
-    afvalwijzer_basisroutetype_id: str
-    afvalwijzer_routenaam: str
-    afvalwijzer_per_x_weken: str
-    afvalwijzer_buitenzetten_vanaf_tot: str
-    afvalwijzer_buitenzetten_vanaf: str
-    afvalwijzer_buitenzetten_tot: str
-    afvalwijzer_afvalkalender_opmerking: str
-    afvalwijzer_afvalkalender_frequentie: str
-    afvalwijzer_fractie_naam: str
-    afvalwijzer_fractie_code: str
-    afvalwijzer_routetype_naam: str
-    afvalwijzer_ophaaldagen: str
-    afvalwijzer_afvalkalender_melding: str
-    afvalwijzer_afvalkalender_van: str
-    afvalwijzer_afvalkalender_tot: str
-    gbd_buurt_code: str
-    gbd_buurt_id: str
-    afvalwijzer_basisroutetype: str
-    afvalwijzer_basisroutetype_omschrijving: str
-    afvalwijzer_basisroutetype_code: str
-    afvalwijzer_instructie2: str
-    afvalwijzer_ophaaldagen2: str
-    afvalwijzer_waar: str
-    afvalwijzer_buitenzetten: str
-    afvalwijzer_buttontekst: str
-    lat: str
-    lon: str
-    afvalwijzer_url: str
+    Id: str
+    Straatnaam: str
+    Huisnummer: str
+    Huisletter: str
+    Huisnummertoevoeging: str
+    Postcode: str
+    Woonplaatsnaam: str
+    Statusadres: str
+    Gebruiksdoelwoonfunctie: str
+    Afvalwijzerinstructie: str
+    Afvalwijzerbasisroutetypeid: str
+    Afvalwijzerroutenaam: str
+    Afvalwijzerperxweken: str
+    Afvalwijzerbuitenzettenvanaftot: str
+    Afvalwijzerbuitenzettenvanaf: str
+    Afvalwijzerbuitenzettentot: str
+    Afvalwijzerafvalkalenderopmerking: str
+    Afvalwijzerafvalkalenderfrequentie: str
+    Afvalwijzerfractienaam: str
+    Afvalwijzerfractiecode: str
+    Afvalwijzerroutetypenaam: str
+    Afvalwijzerophaaldagen: str
+    Afvalwijzerafvalkalendermelding: str
+    Afvalwijzerafvalkalendervan: str
+    Afvalwijzerafvalkalendertot: str
+    Afvalwijzerbasisroutetype: str
+    Afvalwijzerbasisroutetypeomschrijving: str
+    Afvalwijzerbasisroutetypecode: str
+    Afvalwijzergeometrie: str
+    Afvalwijzerinstructie2: str
+    Afvalwijzerophaaldagen2: str
+    Afvalwijzerwaar: str
+    Afvalwijzerbuitenzetten: str
+    Afvalwijzerbuttontekst: str
+    Afvalwijzerurl: str
+    Bagnummeraanduidingid: str
+    Gbdbuurtid: str
+    Gbdbuurtcodeid: str
 
     def adres(self) -> 'Adres':
         """Mapping naar adres: Amsterdam, A00c, Nieuwmarkt 4A-3."""
-        woonplaats = self.woonplaatsnaam
-        buurt = self.gbd_buurt_code
-        straatnaam = self.naam_openbareruimte
-        huisnummer = int(self.huisnummer)
-        toevoeging = self.huisletter + ('-' + self.huisnummertoevoeging
-                                        if self.huisnummertoevoeging else '')
+        woonplaats = self.Woonplaatsnaam
+        buurt = self.Gbdbuurtcodeid
+        straatnaam = self.Straatnaam
+        huisnummer = int(self.Huisnummer)
+        toevoeging = self.Huisletter + ('-' + self.Huisnummertoevoeging
+                                        if self.Huisnummertoevoeging else '')
         return Adres(woonplaats, buurt, straatnaam, huisnummer, toevoeging)
 
     def regel(self) -> 'Regel':
@@ -74,18 +73,18 @@ class AfvalwijzerRegel(NamedTuple):
         regels per buurt gepresenteerd worden.
         """
         return Regel(
-            self.woonplaatsnaam,
-            self.gbd_buurt_code,
-            self.afvalwijzer_fractie_naam,
-            self.afvalwijzer_afvalkalender_melding,
-            self.afvalwijzer_afvalkalender_van,
-            self.afvalwijzer_afvalkalender_tot,
-            self.afvalwijzer_instructie2,
-            self.afvalwijzer_ophaaldagen2,
-            self.afvalwijzer_afvalkalender_frequentie,
-            self.afvalwijzer_buitenzetten,
-            self.afvalwijzer_waar,
-            self.afvalwijzer_afvalkalender_opmerking,
+            self.Woonplaatsnaam,
+            self.Gbdbuurtcodeid,
+            self.Afvalwijzerfractienaam,
+            self.Afvalwijzerafvalkalendermelding,
+            self.Afvalwijzerafvalkalendervan,
+            self.Afvalwijzerafvalkalendertot,
+            self.Afvalwijzerinstructie2,
+            self.Afvalwijzerophaaldagen2,
+            self.Afvalwijzerafvalkalenderfrequentie,
+            self.Afvalwijzerbuitenzetten,
+            self.Afvalwijzerwaar,
+            self.Afvalwijzerafvalkalenderopmerking,
         )
 
 

@@ -1,3 +1,4 @@
+bleach~=5.0.0
 fpdf2
 Pillow
-bleach~=5.0.0
+requests

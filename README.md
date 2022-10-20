@@ -12,17 +12,17 @@ naar fonts in je systeem. Pas deze aan naar je eigen systeem config. (In de
 toekomst zal deze configuratie verplaatsen naar `config.py`)
 
 ## Uitvoeren
-Draai eenmaal `tests.py`. Dit genereert een extract met de eerste 10.000 regels
-van het databestand. Als dit succesvol draait is je setup goed.
+Draai `python main.py files/afvalwijzer-1000.csv output/afvalwijzer.pdf` om te
+je set-up te testen met de eerste 10.000 regels van de afvalwijzer. Als dit
+succesvol draait dan is je setup goed.
 
-Je kan met het test script ook een aantal tests uitvoeren om inzicht te krijgen
-in de samenhang van waardes in het databestad. Zie de verscheidene `test_info_`
-functies. Ze zijn redelijk goed gedocumenteerd.
+Gebruik uiteindelijk `main.py` op zelf gedownloade CSV bestanden om deze om te
+zetten naar overzichtelijke `.pdf` bestanden. Dit verdient de aanbeveling omdat
+je zo controle houdt over de gegevens in het CSV bestand.
 
-Gebruik uiteindelijk `main.py` om werkelijk het ruwe databestand om te zetten
-naar een overzichtelijk `.pdf` bestand. Deze staat ingesteld om te werken met
-het 10k bestand. Pas onderin de commentaren aan om het uit te voeren op het
-volledige databestand.
+Als alternatief is er ook `stadsdelen.py`. Dit script maakt voor elk stadsdeel
+een aparte PDF op basis van gedownloade data. Je hebt dus geen eigen CSV data
+nodig. Let op, het downloaden van de afvalwijzer regels duurt lang.
 
 ## Licentie
 
