@@ -128,11 +128,12 @@ class Printer(FPDF):
         for regel in regelset:
             for i, (label, uitleg) in enumerate(regel.labels()):
                 fractie = regel.fractie if i == 0 else ''
-                # "Groente, fruit en tuinafval" is te lang en wordt over twee
-                # regels afgedrukt. Vandaar de multicell en y-reset.
-                y = self.y
-                self.multi_cell(25, line_height, fractie, DEBUG_BOX)
-                self.y = y
+                # "Groente, fruit en tuinafval" is te lang en loopt door andere
+                # tekst heen. Advies is om in beperkte ruimte "GFT" te
+                # schrijven.
+                if fractie.startswith('Groente,'):
+                    fractie = 'GFT'
+                self.cell(25, line_height, fractie, DEBUG_BOX)
                 self.x += 2
                 self.cell(26, line_height, label, DEBUG_BOX, align='R')
                 self.x += 2
