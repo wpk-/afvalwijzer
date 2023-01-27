@@ -4,6 +4,7 @@ Maakt een afvalwijzer PDF per stadsdeel.
 Het script download voor elk stadsdeel de CSV met alle huidige regels.
 Dit downloaden neemt enige tijd.
 """
+from logging import getLogger, INFO, WARNING
 from os import fdopen
 from pathlib import Path
 from shutil import copyfileobj
@@ -15,9 +16,19 @@ import requests
 
 from afvalwijzer import maak_pdf
 
+getLogger('fontTools').setLevel(WARNING)
+getLogger('fpdf').setLevel(INFO)
+getLogger('PIL').setLevel(INFO)
+
+logger = getLogger(__name__)
+
 
 def download_csv(url: str, params: Dict[str, Any] = None) -> str:
     tmp_fd, tmp_file = mkstemp(suffix='.csv')
+
+    logger.debug(tmp_file)
+    logger.debug(url)
+    logger.debug(params)
 
     with requests.get(url, params, stream=True) as r:
         r.raise_for_status()
@@ -30,25 +41,29 @@ def download_csv(url: str, params: Dict[str, Any] = None) -> str:
 
 
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+
     afvalwijzer_url = 'https://api.data.amsterdam.nl/v1/afvalwijzer/afvalwijzer/'
     params = {
-        'statusAdres[in]': ('Verblijfsobject in gebruik',
-                            'Plaats aangewezen',
-                            'Verbijfsobject in gebruik (niet ingemeten)',
-                            ),
+        'statusAdres[in]': ','.join((
+                'Verblijfsobject in gebruik',
+                'Plaats aangewezen',
+                'Verbijfsobject in gebruik (niet ingemeten)',
+            )),
         '_format': 'csv',
         # '_pageSize': 1000,
     }
 
     for pdf_file, query in [
-        ('output/afvalwijzer-centrum.pdf', {'gbdBuurtCodeId[like]': 'A*'}),
-        ('output/afvalwijzer-west.pdf', {'gbdBuurtCodeId[like]': 'E*'}),
-        ('output/afvalwijzer-nieuw-west.pdf', {'gbdBuurtCodeId[like]': 'F*'}),
-        ('output/afvalwijzer-zuid.pdf', {'gbdBuurtCodeId[like]': 'K*'}),
-        ('output/afvalwijzer-oost.pdf', {'gbdBuurtCodeId[like]': 'M*'}),
-        ('output/afvalwijzer-noord.pdf', {'gbdBuurtCodeId[like]': 'N*'}),
-        ('output/afvalwijzer-weesp.pdf', {'gbdBuurtCodeId[like]': 'S*'}),
-        ('output/afvalwijzer-zuidoost.pdf', {'gbdBuurtCodeId[like]': 'T*'}),
+        ('output/afvalwijzer-centrum.pdf', {'gbdBuurtCode[like]': 'A*'}),
+        ('output/afvalwijzer-west.pdf', {'gbdBuurtCode[like]': 'E*'}),
+        ('output/afvalwijzer-nieuw-west.pdf', {'gbdBuurtCode[like]': 'F*'}),
+        ('output/afvalwijzer-zuid.pdf', {'gbdBuurtCode[like]': 'K*'}),
+        ('output/afvalwijzer-oost.pdf', {'gbdBuurtCode[like]': 'M*'}),
+        ('output/afvalwijzer-noord.pdf', {'gbdBuurtCode[like]': 'N*'}),
+        ('output/afvalwijzer-weesp.pdf', {'gbdBuurtCode[like]': 'S*'}),
+        ('output/afvalwijzer-zuidoost.pdf', {'gbdBuurtCode[like]': 'T*'}),
     ]:
         print(pdf_file)
 

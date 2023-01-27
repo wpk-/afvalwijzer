@@ -54,12 +54,14 @@ class AfvalwijzerRegel(NamedTuple):
     Afvalwijzerurl: str
     Bagnummeraanduidingid: str
     Gbdbuurtid: str
-    Gbdbuurtcodeid: str
+    Gbdbuurtcode: str
+    Afvalwijzerinzamelgebiednaam: str
+    Afvalwijzerinzamelgebiedcode: str
 
     def adres(self) -> 'Adres':
         """Mapping naar adres: Amsterdam, A00c, Nieuwmarkt 4A-3."""
         woonplaats = self.Woonplaatsnaam
-        buurt = self.Gbdbuurtcodeid
+        buurt = self.Gbdbuurtcode
         straatnaam = self.Straatnaam
         huisnummer = int(self.Huisnummer)
         toevoeging = self.Huisletter + ('-' + self.Huisnummertoevoeging
@@ -74,7 +76,7 @@ class AfvalwijzerRegel(NamedTuple):
         """
         return Regel(
             self.Woonplaatsnaam,
-            self.Gbdbuurtcodeid,
+            self.Gbdbuurtcode,
             self.Afvalwijzerfractienaam,
             self.Afvalwijzerafvalkalendermelding,
             self.Afvalwijzerafvalkalendervan,

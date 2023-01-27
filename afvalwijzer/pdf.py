@@ -120,15 +120,19 @@ class Printer(FPDF):
 
         self.y += line_height // 2
 
-    def print_regelset(self, regelset: Iterable[Regel, ...]) -> None:
+    def print_regelset(self, regelset: Iterable[Regel]) -> None:
         font_size = FONT_SIZE_BASE
         line_height = LINE_HEIGHT * font_size
-        cw = CONTENT_WIDTH - 50
+        cw = CONTENT_WIDTH - 55
 
         for regel in regelset:
             for i, (label, uitleg) in enumerate(regel.labels()):
                 fractie = regel.fractie if i == 0 else ''
-                self.cell(20, line_height, fractie, DEBUG_BOX)
+                # "Groente, fruit en tuinafval" is te lang en wordt over twee
+                # regels afgedrukt. Vandaar de multicell en y-reset.
+                y = self.y
+                self.multi_cell(25, line_height, fractie, DEBUG_BOX)
+                self.y = y
                 self.x += 2
                 self.cell(26, line_height, label, DEBUG_BOX, align='R')
                 self.x += 2

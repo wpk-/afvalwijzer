@@ -33,17 +33,24 @@ Daardoor zijn een aantal velden niet nodig:
 - afvalwijzer_buitenzetten_vanaf_tot (is identiek aan afvalwijzer_buitenzetten)
 
 """
-import logging
+from logging import getLogger, INFO, WARNING
 from pathlib import Path
 
 from afvalwijzer import maak_pdf
 
-logging.basicConfig(level=logging.INFO)
+getLogger('fontTools').setLevel(WARNING)
+getLogger('fpdf').setLevel(INFO)
+getLogger('PIL').setLevel(INFO)
+
+logger = getLogger(__name__)
 
 
 if __name__ == '__main__':
     import argparse
+    import logging
     from time import time
+    
+    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(
         description='Maak een schone afvalwijzer pdf.')
