@@ -6,7 +6,6 @@ Dit downloaden neemt enige tijd.
 """
 from logging import getLogger, INFO, WARNING
 from os import fdopen
-from shutil import copyfileobj
 from time import time
 from typing import Any, Dict
 
@@ -28,7 +27,7 @@ def download_csv(csv_file: str, url: str, params: Dict[str, Any] = None) -> None
     with requests.get(url, params, stream=True) as r:
         r.raise_for_status()
         with open(csv_file, 'wb') as f:
-            copyfileobj(r.raw, f)
+            f.write(r.content)
 
 
 if __name__ == '__main__':
