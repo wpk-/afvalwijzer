@@ -1,5 +1,5 @@
 # afvalwijzer
-Schrijf de online afvalwijzer uit in een pdf of docx (of csv of xlsx).
+Maakt de volledige set regels uit de Amsterdamse Afvalwijzer leesbaar voor mensen.
 
 
 ## Configuratie
@@ -12,9 +12,10 @@ omgeving.
 Bewerk de verbindingsgegevens in `db-example.yaml` en sla op als `db.yaml`.
 
 
-## Uitvoeren - A&G
+## Uitvoeren voor vaststelling
 Voor A&G exporteren we voor elk stadsdeel apart een docx met de regels voor
-bewoners en een docx met de regels voor bedrijven.
+bewoners en een docx met de regels voor bedrijven. Dit formaat is akkoord
+bevonden om de regels van de afvalwijzer formeel vast te kunnen stellen.
 
 #### 1. Verbind met VPN
 Zorg dat je verbindt met de Azure VPN. Dit is nodig voor een verbinding met de
@@ -29,10 +30,10 @@ Dit script voert de volgende stappen uit:
    aparte voor bedrijven. (Duurt ook een paar minuten.)
 
 Als stap 2 vandaag al is uitgevoerd wordt de bestaande download, `db.zip`,
-hergebruikt. 
+hergebruikt.
 
 
-## Uitvoeren - app.py
+## app.py in detail
 Bovengenoemd script `run_all.bat` roept herhaaldelijk `app.py` aan met
 verschillende argumenten. Bijvoorbeeld met de namen van de verschillende
 stadsdelen.
