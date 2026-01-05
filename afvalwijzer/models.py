@@ -1,173 +1,106 @@
 from typing import NamedTuple
 
-import bleach
 
-# Nodig om melding en opmerking op te schonen in `Regel.labels()`.
-strip_tags = bleach.Cleaner([], {}, strip=True).clean
-
-
-class AfvalwijzerRegel(NamedTuple):
+class Brongegeven(NamedTuple):
     """Instructies voor een afvalfractie op een adres.
 
-    De veldnamen komen exact en op volgorde overeen met de kolomnamen van
-    de CSV data dump.
+    Elk brondata record koppelt 1) een adres aan 2) een geldende regel.
+    Op een adres kunnen meerdere regels gelden. Dat betekent meerdere records.
+    Een regel kan op meerdere adressen gelden. Ook dat betekent meerdere records.
 
-    Elke regel (instantie van deze klasse) linkt een adres aan een regel
-    (=instructie). De klasse heeft daarom twee methodes:
-        adres() - geeft het adres,
-        regel() - geeft de regel die geldt voor het aanbieden van afval.
+    De volgorde van deze velden is belangrijk. Door de volgorde te veranderen
+    zullen bepaalde delen van de code niet (juist) meer functioneren.
+    (Zie met name `db.py` en `content.py`, maar andere delen kunnen hier ook van
+    afhangen.)
     """
-    Id: str
-    Straatnaam: str
-    Huisnummer: str
-    Huisletter: str
-    Huisnummertoevoeging: str
-    Postcode: str
-    Woonplaatsnaam: str
-    Statusadres: str
-    Gebruiksdoelwoonfunctie: str
-    Afvalwijzerinstructie: str
-    Afvalwijzerbasisroutetypeid: str
-    Afvalwijzerroutenaam: str
-    Afvalwijzerperxweken: str
-    Afvalwijzerbuitenzettenvanaftot: str
-    Afvalwijzerbuitenzettenvanaf: str
-    Afvalwijzerbuitenzettentot: str
-    Afvalwijzerafvalkalenderopmerking: str
-    Afvalwijzerafvalkalenderfrequentie: str
-    Afvalwijzerfractienaam: str
-    Afvalwijzerfractiecode: str
-    Afvalwijzerroutetypenaam: str
-    Afvalwijzerophaaldagen: str
-    Afvalwijzerafvalkalendermelding: str
-    Afvalwijzerafvalkalendervan: str
-    Afvalwijzerafvalkalendertot: str
-    Afvalwijzerbasisroutetype: str
-    Afvalwijzerbasisroutetypeomschrijving: str
-    Afvalwijzerbasisroutetypecode: str
-    Afvalwijzergeometrie: str
-    Afvalwijzerinstructie2: str
-    Afvalwijzerophaaldagen2: str
-    Afvalwijzerwaar: str
-    Afvalwijzerbuitenzetten: str
-    Afvalwijzerbuttontekst: str
-    Afvalwijzerurl: str
-    Bagnummeraanduidingid: str
-    Gbdbuurtid: str
-    Gbdbuurtcode: str
-    Afvalwijzerinzamelgebiednaam: str
-    Afvalwijzerinzamelgebiedcode: str
+    # Filters
+    woonfunctie: bool
+    stadsdeel: str
 
+    # (Hoofdstuk in pdf en docx)
+    plaatsnaam: str
+    buurtnaam: str
+    afvalfractie: str
+
+    # Regel
+    instructie: str | None
+    ophaaldagen: str | None
+    frequentie: str | None
+    buitenzetten: str | None
+    waar: str | None
+    opmerking: str | None
+    melding: str | None
+    melding_van: str | None
+    melding_tot: str | None
+
+    # Adres
+    straatnaam: str
+    huisnummer: int
+    huisletter: str | None
+    huisnummertoevoeging: str | None
+
+    @property
     def adres(self) -> 'Adres':
-        """Mapping naar adres: Amsterdam, A00c, Nieuwmarkt 4A-3."""
-        woonplaats = self.Woonplaatsnaam
-        buurt = self.Gbdbuurtcode
-        straatnaam = self.Straatnaam
-        huisnummer = int(self.Huisnummer)
-        toevoeging = self.Huisletter + ('-' + self.Huisnummertoevoeging
-                                        if self.Huisnummertoevoeging else '')
-        return Adres(woonplaats, buurt, straatnaam, huisnummer, toevoeging)
+        """Beschrijft puur het adres zonder buurt, fractie of afvalregels.
+        """
+        if self.huisnummertoevoeging:
+            return Adres(self.straatnaam, self.huisnummer,
+                         f'{self.huisletter}-{self.huisnummertoevoeging}')
+        else:
+            return Adres(self.straatnaam, self.huisnummer, self.huisletter)
 
+    @property
+    def buurt(self) -> 'Buurt':
+        return Buurt(self.plaatsnaam, self.buurtnaam)
+
+    @property
     def regel(self) -> 'Regel':
-        """Mapping naar regel.
-
-        Een regel heeft ook een woonplaats en buurt omdat in de PDF
-        regels per buurt gepresenteerd worden.
+        """Beschrijft puur de afvalregel zonder buurt, fractie of adres.
         """
         return Regel(
-            self.Woonplaatsnaam,
-            self.Gbdbuurtcode,
-            self.Afvalwijzerfractienaam,
-            self.Afvalwijzerafvalkalendermelding,
-            self.Afvalwijzerafvalkalendervan,
-            self.Afvalwijzerafvalkalendertot,
-            self.Afvalwijzerinstructie2,
-            self.Afvalwijzerophaaldagen2,
-            self.Afvalwijzerafvalkalenderfrequentie,
-            self.Afvalwijzerbuitenzetten,
-            self.Afvalwijzerwaar,
-            self.Afvalwijzerafvalkalenderopmerking,
+            self.instructie,
+            self.ophaaldagen,
+            self.frequentie,
+            self.buitenzetten,
+            self.waar,
+            self.opmerking,
+            self.melding,
+            self.melding_van,
+            self.melding_tot,
         )
 
 
 class Adres(NamedTuple):
-    """Een adres opgebouwd in volgorde van specificiteit, incl. buurt.
+    """Alleen de noodzakelijke adresgegevens.
 
-    Bijvoorbeeld "Amsterdam, A00c, Nieuwmarkt 4A-3"
+    Plaatsnaam en buurt worden al gelezen uit het brongegeven dus alleen
+    straatnaam en nummer zijn dan nog nodig. Toevoeging is een samenstelling van
+    huisletter en huisnummertoevoeging.
     """
-    woonplaats: str
-    buurt: str
     straatnaam: str
     huisnummer: int
     toevoeging: str
 
 
-class Huisnummer(NamedTuple):
-    """Een volledig huisnummer, inclusief huisnummertoevoeging.
-
-    Deze representatie wordt gebruikt om adresreeksen te maken. Binnen
-    een straat worden dan opeenvolgende huisnummers samengevoegd. Op het
-    laatste huisnummer wordt de toevoeging dan vervangen door een
-    aanduiding voor de reeks, zoals "A--468L".
-    """
-    huisnummer: int
-    toevoeging: str
-
-
-class Straat(NamedTuple):
-    """De aanduiding van een adres tot op straatniveau zonder huisnummer.
-    """
-    woonplaats: str
-    buurt: str
-    straatnaam: str
+class Buurt(NamedTuple):
+    plaatsnaam: str
+    buurtnaam: str
 
 
 class Regel(NamedTuple):
-    """De geldende regel voor het aanbieden van afval van een fractie.
+    """De geldende regel voor het aanbieden van afval.
 
-    Bijvoorbeeld, hoe biedt ik mijn papier afval aan? Op welke dagen
-    wordt dat ingezameld?
+    Bijvoorbeeld, waar bied ik mijn afval aan? Op welke dagen wordt dat
+    ingezameld?
+
+    De regel beschrijft _niet_ de afvalfractie of het adres.
     """
-    woonplaats: str
-    buurt: str
-    fractie: str
-    melding: str        # = Let op
-    melding_van: str    # = Let op
-    melding_tot: str    # = Let op
-    instructie: str     # = Hoe
-    ophaaldagen: str    # = Ophaaldag
-    frequentie: str     # = Ophaaldag
-    buitenzetten: str   # = Buiten zetten
-    waar: str           # = Waar
-    opmerking: str      # = Opmerking
-
-    def labels(self) -> list[tuple[str, str]]:
-        def datum(s: str) -> str:
-            """Haalt de datum uit de UTC-string."""
-            return f'{s[8:10]}-{s[5:7]}-{s[0:4]}'
-
-        arr = []
-
-        if self.melding:
-            if self.melding_van:
-                arr.append(('Let op:', f'Van {datum(self.melding_van)}'
-                                       f' tot {datum(self.melding_tot)}'))
-                arr.append(('', strip_tags(self.melding)))
-            else:
-                arr.append(('Let op:', self.melding))
-        if self.instructie:
-            arr.append(('Hoe:', self.instructie))
-        if self.ophaaldagen:
-            arr.append(('Ophaaldag:', self.ophaaldagen +
-                        (f', {self.frequentie}' if self.frequentie else '')))
-        if self.buitenzetten:
-            arr.append(('Buiten zetten:', self.buitenzetten))
-        if self.waar:
-            arr.append(('Waar:', self.waar))
-        if self.opmerking:
-            arr.append(('Opmerking:', strip_tags(self.opmerking)))
-
-        return arr
-
-
-Regelset = tuple[Regel, ...]
+    instructie: str | None      # = Hoe
+    ophaaldagen: str | None     # = Ophaaldag
+    frequentie: str | None      # = Ophaaldag
+    buitenzetten: str | None    # = Buiten zetten
+    waar: str | None            # = Waar
+    opmerking: str | None       # = Opmerking
+    melding: str | None         # = Let op
+    melding_van: str | None     # = Let op
+    melding_tot: str | None     # = Let op

@@ -1,4 +1,5 @@
-bleach~=5.0.0
+bleach
 fpdf2
-Pillow
-requests
+pikepdf
+psycopg[binary]
+pyyaml

@@ -1,0 +1,5 @@
+dbname: databasename
+host: hostname.postgres.database.azure.com
+password: if-this-key-is-invalidated-it-will-be-renewed-by-the-code-automatically
+port: 5432
+user: user@example.com
